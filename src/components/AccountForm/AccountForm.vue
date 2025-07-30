@@ -106,8 +106,6 @@ export default defineComponent({
       store.updateAccounts(newAccounts);
     }, { deep: true });
 
-    console.log(store.$state.accounts);
-
     return { accounts, addAccount, removeAccount, validateAndSave, validationErrors, form: {} as Record<string, unknown> };
   },
 });
