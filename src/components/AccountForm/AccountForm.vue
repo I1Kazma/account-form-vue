@@ -66,14 +66,15 @@
 import { defineComponent, ref, watch } from 'vue';
 import { useStore } from '../../stores';
 import { Delete, QuestionFilled } from '@element-plus/icons-vue';
+import type { Account, ValidationErrors } from '../../types/account';
 
 export default defineComponent({
   name: 'AccountForm',
   components: { Delete, QuestionFilled },
   setup() {
     const store = useStore();
-    const accounts = ref<any[]>(store.$state.accounts);
-    const validationErrors = ref<{ [key: string]: boolean }[]>([]);
+    const accounts = ref<Account[]>(store.$state.accounts);
+    const validationErrors = ref<ValidationErrors[]>([]);
 
     const addAccount = () => {
       accounts.value.push({ rawLabel: '', label: [], type: 'LDAP', login: '', password: null });
@@ -88,24 +89,26 @@ export default defineComponent({
 
     const validateAndSave = (index: number) => {
       const account = accounts.value[index];
-      const errors: { [key: string]: boolean } = {};
-      if (!account.login) errors['login'] = true;
-      if (account.type === 'Локальная' && !account.password) errors['password'] = true;
+      const errors: ValidationErrors = {};
+      if (!account.login) errors.login = true;
+      if (account.type === 'Локальная' && !account.password) errors.password = true;
+      if (account.rawLabel && account.rawLabel.length > 50) errors.label = true;
       validationErrors.value[index] = errors;
 
       if (Object.keys(errors).length === 0) {
-        account.label = account.rawLabel ? account.rawLabel.split(';').map((tag: string) => ({ text: tag.trim() })).filter((tag: { text: string }) => tag.text) : [];
+        account.label = account.rawLabel ? account.rawLabel.split(';').map((tag: string) => ({ text: tag.trim() })).filter((tag) => tag.text) : [];
         if (account.type === 'LDAP') account.password = null;
         store.updateAccounts([...accounts.value]);
       }
     };
 
-    watch(accounts, (newAccounts) => {
+    watch(accounts, (newAccounts: Account[]) => {
       store.updateAccounts(newAccounts);
     }, { deep: true });
 
+    console.log(store.$state.accounts);
 
-    return { accounts, addAccount, removeAccount, validateAndSave, validationErrors, form: {} };
+    return { accounts, addAccount, removeAccount, validateAndSave, validationErrors, form: {} as Record<string, unknown> };
   },
 });
 </script>
